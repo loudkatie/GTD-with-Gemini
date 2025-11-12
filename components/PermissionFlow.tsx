@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Permission, PermissionStatus } from '../types';
 
@@ -49,11 +48,11 @@ const PermissionButton: React.FC<PermissionButtonProps> = ({ label, status, onCl
             disabled={!isIdle}
             className={`w-full flex items-center p-3 rounded-lg text-left transition-all duration-300 ${
                 isGranted 
-                    ? 'bg-green-500/20 text-green-300' 
-                    : 'bg-gray-600 hover:bg-gray-500 text-white'
+                    ? 'bg-[#007AFF]/20 text-[#007AFF]' 
+                    : 'bg-[#444444] hover:bg-[#555555] text-[#EAEAEA]'
             }`}
         >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${isGranted ? 'bg-green-500' : 'bg-gray-800'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${isGranted ? 'bg-[#007AFF]' : 'bg-[#2A2A2A]'}`}>
                 {isGranted ? <CheckIcon className="w-5 h-5 text-white" /> : <Icon className="w-5 h-5 text-gray-300"/>}
             </div>
             <span className="flex-1 font-semibold">{label}</span>

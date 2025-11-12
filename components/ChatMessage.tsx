@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Message } from '../types';
 
@@ -16,24 +15,28 @@ const LoadingDots: React.FC = () => (
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     const isAi = message.from === 'ai';
+    const isUser = message.from === 'user';
     const isSystem = message.from === 'system';
     const isLoading = message.id === 'loading';
 
     if (isSystem) {
         return (
-            <div className="text-center text-xs text-gray-500 italic py-2">
+            <div className="text-center text-xs text-[#888888] italic py-2">
                 {message.text}
             </div>
         );
     }
 
-    const wrapperClasses = `flex items-end gap-2 ${isAi ? 'justify-start' : 'justify-end'}`;
-    const bubbleClasses = `max-w-xs md:max-w-md p-3 rounded-2xl shadow-md ${isAi ? 'bg-gray-700 text-white rounded-bl-none' : 'bg-teal-600 text-white rounded-br-none'}`;
+    const wrapperClasses = `flex items-end gap-2 ${!isUser ? 'justify-start' : 'justify-end'}`;
+    const bubbleClasses = `max-w-xs md:max-w-md p-3 rounded-2xl shadow-md ${
+        isAi ? 'bg-[#333333] text-[#EAEAEA] rounded-bl-none' :
+        isUser ? 'bg-[#007AFF] text-white rounded-br-none' : ''
+    }`;
 
     return (
         <div className={wrapperClasses}>
             {isAi && (
-                <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[#007AFF] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                     AI
                 </div>
             )}
@@ -46,7 +49,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                         <ul className="text-xs space-y-1">
                             {message.grounding.map((g, i) => (
                                 <li key={i}>
-                                    <a href={g.uri} target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:underline truncate block">
+                                    <a href={g.uri} target="_blank" rel="noopener noreferrer" className="text-[#007AFF] hover:underline truncate block">
                                         {g.title || 'Google Maps Link'}
                                     </a>
                                 </li>

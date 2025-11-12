@@ -1,11 +1,13 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Message, User, GtdTask, CalendarEvent, Coordinates, Permission, PermissionStatus } from './types';
+import { Message, User, Coordinates, Permission, PermissionStatus, SuggestedTask, DocumentReview } from './types';
 import { MOCK_USER, MOCK_TASKS, MOCK_CALENDAR_EVENTS } from './constants';
-import { getProactiveSuggestion } from './services/geminiService';
+import { getProactiveSuggestion, getDocumentReviewSuggestion } from './services/geminiService';
 import ChatMessage from './components/ChatMessage';
 import PermissionFlow from './components/PermissionFlow';
 import TaskSuggestion from './components/TaskSuggestion';
+import Directions from './components/Directions';
+import ChatInput from './components/ChatInput';
+import DocumentReviewSuggestion from './components/DocumentReviewSuggestion';
 
 const App: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -27,9 +29,49 @@ const App: React.FC = () => {
         scrollToBottom();
     }, [messages]);
 
-    const addMessage = useCallback((text: string, from: 'ai' | 'system', component?: React.ReactNode, grounding?: { uri: string, title: string }[]) => {
-        setMessages(prev => [...prev, { id: Date.now(), text, from, component, grounding }]);
+    const addMessage = useCallback((text: string, from: 'ai' | 'user' | 'system', component?: React.ReactNode, grounding?: { uri: string, title: string }[]) => {
+        setMessages(prev => [...prev, { id: Date.now() + Math.random(), text, from, component, grounding }]);
     }, []);
+    
+    const handleSendMessage = useCallback(async (text: string) => {
+        if (!text.trim() || isLoading) return;
+    
+        const userMessage = text.trim();
+        addMessage(userMessage, 'user');
+        setIsLoading(true);
+    
+        // Simple keyword-based routing for the new Document Review PCE
+        if (userMessage.toLowerCase().includes('review')) {
+            const queryMatch = userMessage.match(/'([^']*)'|"([^"]*)"/);
+            const query = queryMatch ? (queryMatch[1] || queryMatch[2]) : "the document";
+            
+            try {
+                const { review, systemMessages } = await getDocumentReviewSuggestion(query);
+                
+                for (let i = 0; i < systemMessages.length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    addMessage(systemMessages[i], 'system');
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 800));
+                const reviewComponent = <DocumentReviewSuggestion review={review} />;
+                addMessage("I've analyzed the document. Here's a summary and some suggested edits you can review while you walk.", 'ai', reviewComponent);
+    
+            } catch (error) {
+                console.error(error);
+                addMessage("Sorry, I couldn't process that document review request.", 'ai');
+            } finally {
+                setIsLoading(false);
+            }
+    
+        } else {
+            // Placeholder for general chat
+            setTimeout(() => {
+                addMessage("I can help with proactive tasks based on your location or review documents for you. How can I assist?", 'ai');
+                setIsLoading(false);
+            }, 1000);
+        }
+    }, [addMessage, isLoading]);
 
     const handlePermissionUpdate = useCallback((permission: Permission, status: PermissionStatus) => {
         setPermissions(prev => ({ ...prev, [permission]: status }));
@@ -83,8 +125,19 @@ const App: React.FC = () => {
         addMessage("Checking your tasks, calendar, and location to find your next best action...", 'system');
         try {
             const { suggestion, grounding } = await getProactiveSuggestion(user.firstName, location, MOCK_TASKS, MOCK_CALENDAR_EVENTS);
-            const suggestionComponent = <TaskSuggestion suggestion={suggestion} />;
-            addMessage(suggestion, 'ai', suggestionComponent, grounding);
+            
+            const handleAccept = (task: SuggestedTask) => {
+                const directionsText = `Great. Here are your walking directions to ${task.name}.`;
+                const directionsComponent = <Directions task={task} />;
+                addMessage(directionsText, 'ai', directionsComponent);
+            };
+    
+            const handleSnooze = () => {
+                addMessage("Okay, not now. I'll keep it on your list.", 'ai');
+            };
+
+            const suggestionComponent = <TaskSuggestion suggestion={suggestion} grounding={grounding} onAccept={handleAccept} onSnooze={handleSnooze} />;
+            addMessage(suggestion.suggestionText, 'ai', suggestionComponent, grounding);
         } catch (error) {
             console.error(error);
             addMessage("Sorry, I had trouble coming up with a suggestion. Please try again later.", 'ai');
@@ -95,7 +148,8 @@ const App: React.FC = () => {
 
     useEffect(() => {
         const allGranted = Object.values(permissions).every(status => status === 'granted');
-        const hasFetched = messages.some(m => m.from === 'ai' && m.component?.type === TaskSuggestion);
+        // FIX: Check if m.component is a valid React element before accessing its `type` property.
+        const hasFetched = messages.some(m => m.from === 'ai' && React.isValidElement(m.component) && (m.component.type === TaskSuggestion || m.component.type === Directions));
         
         if (allGranted && coords && !isLoading && !hasFetched) {
            fetchSuggestion(coords);
@@ -104,11 +158,11 @@ const App: React.FC = () => {
     
 
     return (
-        <div className="flex h-screen w-screen items-center justify-center bg-gray-900 font-sans">
-            <div className="flex flex-col h-[95vh] md:h-[85vh] w-full max-w-md bg-gray-800 rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-700">
-                <header className="bg-gray-900 p-4 text-center border-b-2 border-gray-700">
-                    <h1 className="text-xl font-bold text-teal-400">GTD with Gemini</h1>
-                    <p className="text-sm text-gray-400">Your Proactive Productivity Assistant</p>
+        <div className="flex h-screen w-screen items-center justify-center bg-[#1C1C1C] font-sans">
+            <div className="flex flex-col h-[95vh] md:h-[85vh] w-full max-w-md bg-[#2A2A2A] rounded-3xl shadow-2xl overflow-hidden border-4 border-[#3A3A3A]">
+                <header className="bg-[#1C1C1C] p-4 text-center border-b-2 border-[#3A3A3A] flex-shrink-0">
+                    <h1 className="text-xl font-bold text-[#EAEAEA]">GTD with Gemini</h1>
+                    <p className="text-sm text-[#A0A0A0]">Your Proactive Productivity Assistant</p>
                 </header>
                 <main className="flex-1 overflow-y-auto p-4 space-y-4">
                     {messages.map((msg) => (
@@ -117,6 +171,7 @@ const App: React.FC = () => {
                     {isLoading && <ChatMessage message={{ id: 'loading', text: '...', from: 'ai' }} />}
                     <div ref={chatEndRef} />
                 </main>
+                 <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
             </div>
         </div>
     );

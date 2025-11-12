@@ -1,9 +1,11 @@
+// FIX: Import ReactNode to resolve the "Cannot find namespace 'React'" error.
+import type { ReactNode } from 'react';
 
 export interface Message {
     id: number | string;
     text: string;
     from: 'ai' | 'user' | 'system';
-    component?: React.ReactNode;
+    component?: ReactNode;
     grounding?: { uri: string, title: string }[];
 }
 
@@ -38,3 +40,24 @@ export interface Coordinates {
 export type Permission = 'google' | 'location' | 'notifications';
 
 export type PermissionStatus = 'idle' | 'pending' | 'granted' | 'denied';
+
+export interface SuggestedTask {
+    name: string;
+    address: string;
+}
+
+export interface ProactiveSuggestion {
+    suggestionText: string;
+    task: SuggestedTask;
+}
+
+export interface DocumentEdit {
+    original_text: string;
+    suggested_change: string;
+    comment: string;
+}
+
+export interface DocumentReview {
+    summary: string;
+    edits: DocumentEdit[];
+}

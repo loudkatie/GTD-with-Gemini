@@ -1,8 +1,11 @@
-
-import React from 'react';
+import React, { useState } from 'react';
+import { ProactiveSuggestion, SuggestedTask } from '../types';
 
 interface TaskSuggestionProps {
-    suggestion: string;
+    suggestion: ProactiveSuggestion;
+    grounding: { uri: string, title: string }[];
+    onAccept: (task: SuggestedTask) => void;
+    onSnooze: () => void;
 }
 
 const MapPinIcon = () => (
@@ -17,18 +20,38 @@ const SnoozeIcon = () => (
     </svg>
 );
 
-const TaskSuggestion: React.FC<TaskSuggestionProps> = ({ suggestion }) => {
+const TaskSuggestion: React.FC<TaskSuggestionProps> = ({ suggestion, onAccept, onSnooze }) => {
+    const [responded, setResponded] = useState(false);
+
+    const handleAccept = () => {
+        onAccept(suggestion.task);
+        setResponded(true);
+    };
+
+    const handleSnooze = () => {
+        onSnooze();
+        setResponded(true);
+    };
+
+    if (responded) {
+        return null;
+    }
+
     return (
-        <div className="border-t border-gray-600 mt-4 pt-3 space-y-3">
+        <div className="border-t border-[#444] mt-4 pt-3 space-y-3">
             <p className="text-sm font-semibold">What would you like to do?</p>
             <div className="flex flex-col sm:flex-row gap-2">
-                <button className="w-full flex items-center justify-center px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg font-semibold transition-colors duration-200">
+                <button 
+                    onClick={handleAccept}
+                    className="w-full flex items-center justify-center px-4 py-2 bg-[#007AFF] hover:bg-[#0056b3] text-white rounded-lg font-semibold transition-colors duration-200">
                     <MapPinIcon />
-                    Walk me there
+                    Walk me there now
                 </button>
-                <button className="w-full flex items-center justify-center px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-semibold transition-colors duration-200">
+                <button 
+                    onClick={handleSnooze}
+                    className="w-full flex items-center justify-center px-4 py-2 bg-[#444444] hover:bg-[#555555] text-white rounded-lg font-semibold transition-colors duration-200">
                     <SnoozeIcon />
-                    Snooze
+                    Not now
                 </button>
             </div>
         </div>
