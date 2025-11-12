@@ -1,0 +1,7 @@
+{
+  "name": "GTD with Gemini",
+  "description": "A proactive, location-aware productivity assistant that helps you decide what to do next using the GTD method, powered by Gemini 2.5 Pro with Google Maps grounding.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
